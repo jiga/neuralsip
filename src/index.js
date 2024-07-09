@@ -22,65 +22,6 @@ export default {
 
   async serveStaticContent(env) {
     // Serve the static HTML content
-    const html = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>SIP Lens</title>
-          <style>
-              body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-              textarea { width: 100%; height: 200px; }
-              #result { margin-top: 20px; white-space: pre-wrap; }
-          </style>
-      </head>
-      <body>
-          <h1>SIP Lens</h1>
-          <form id="sipForm">
-              <textarea id="sipContent" placeholder="Paste your SIP content here"></textarea>
-              <button type="submit">Submit for Review</button>
-          </form>
-          <div id="result"></div>
-
-          <script>
-              document.getElementById('sipForm').addEventListener('submit', async (e) => {
-                  e.preventDefault();
-                  const content = document.getElementById('sipContent').value;
-                  const resultDiv = document.getElementById('result');
-                  resultDiv.textContent = 'Processing...';
-
-                  try {
-                      const response = await fetch('/api/review', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ content })
-                      });
-
-                      if (!response.ok) throw new Error('API request failed');
-
-                      const data = await response.json();
-                      resultDiv.innerHTML = \`
-                          <h2>Review Result:</h2>
-                          <p>Well-formed: \${data.isWellFormed}</p>
-                          <p>Original work: \${data.isOriginal}</p>
-                          <p>Appropriate: \${data.isAppropriate}</p>
-                          \${data.suggestedConsiderations && data.suggestedConsiderations.length > 0 ? \`
-                              <h3>Suggested Considerations:</h3>
-                              <ul>\${data.suggestedConsiderations.map(item => \`<li>\${item}</li>\`).join('')}</ul>
-                          \` : ''}
-                          <h3>Feedback:</h3>
-                          <p>\${data.feedback}</p>
-                      \`;
-                  } catch (error) {
-                      resultDiv.textContent = \`Error: \${error.message}\`;
-                  }
-              });
-          </script>
-      </body>
-      </html>
-    `;
-
     return new Response(htmlContent, {
       headers: { 'Content-Type': 'text/html' },
     });
@@ -95,9 +36,9 @@ export default {
       const systemPrompt = `
         You are an AI assistant performing the duties of a SIP Editor for the Stacks blockchain. Your responsibilities include:
 
-        1. Verifying that the SIP is well-formed according to the criteria in the SIP Specification. Highlight all errors in text (specially spelling & grammar) of the SIP and suggest improvements.
+        1. Verifying that the SIP is well-formed according to the criteria in the SIP Specification. Highlight all errors in text (specially all spelling & grammar mistakes) of the SIP and suggest improvements. A SIP is not well-formed if there are any errors or mistakes.
         2. Verifying that the SIP has not been proposed before and is original work.
-        3. Verifying that the SIP is appropriate for its type and consideration.
+        3. Verifying that the SIP is appropriate for its Type and Consideration as defined in SIP Specification. If not, provide a detailed feedback on why.
         4. Recommending additional Considerations (strictly from one of these categories: Technical, Economic, Governance, Ethics or Diversity) from the Specification if appropriate.
         5. Ensuring that the text is clear, concise, and grammatically-correct English.
         6. Ensuring that there are appropriate avenues for discussion of the SIP listed in the preamble.
@@ -220,7 +161,7 @@ The act of ratifying a SIP is the act of transitioning it to the Ratified status
         Provide a review with the following structure:
         1. Is it well-formed? (true/false)
         2. Does it appear to be original work? (true/false)
-        3. Is it appropriate for its type and consideration? (true/false)
+        3. Is it appropriate for its Type and Consideration? (true/false)
         4. Suggest additional Considerations if appropriate (list)
         5. Provide detailed feedback (string)
 

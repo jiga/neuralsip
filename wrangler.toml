@@ -1,4 +1,4 @@
-name = "sip-lens"
+name = "neuralsip"
 main = "src/index.js"
 compatibility_date = "2024-07-02"
 workers_dev = true

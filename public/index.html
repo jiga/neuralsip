@@ -3,65 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIP Review Assistant</title>
+    <title>NeuralSIP: AI-Powered SIP Review</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/typo-js/1.2.1/typo.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
+        // Configure marked.js
+        marked.setOptions({
+            breaks: true, // Interpret line breaks as <br>
+            gfm: true,    // Use GitHub Flavored Markdown
+            headerIds: false, // Don't add ids to headers
+            sanitize: false // Don't sanitize HTML (be careful with this if user content is involved)
+        });
+
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        primary: {"50":"#eff6ff","100":"#dbeafe","200":"#bfdbfe","300":"#93c5fd","400":"#60a5fa","500":"#3b82f6","600":"#2563eb","700":"#1d4ed8","800":"#1e40af","900":"#1e3a8a","950":"#172554"}
+                        neuro: {"50":"#edfcf5","100":"#d3f8e8","200":"#aaf0d5","300":"#73e3bc","400":"#39cea0","500":"#15b585","600":"#0a916c","500":"#087f5b","800":"#0a6c4e","900":"#0c5a43","950":"#03321f"}
+                    },
+                    fontFamily: {
+                        'sans': ['Jura', 'sans-serif'],
+                        'mono': ['JetBrains Mono', 'monospace']
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
                     }
-                },
-                fontFamily: {
-                    'body': [
-                        'Inter', 
-                        'ui-sans-serif', 
-                        'system-ui', 
-                        '-apple-system', 
-                        'system-ui', 
-                        'Segoe UI', 
-                        'Roboto', 
-                        'Helvetica Neue', 
-                        'Arial', 
-                        'Noto Sans', 
-                        'sans-serif', 
-                        'Apple Color Emoji', 
-                        'Segoe UI Emoji', 
-                        'Segoe UI Symbol', 
-                        'Noto Color Emoji'
-                    ],
-                    'sans': [
-                        'Inter', 
-                        'ui-sans-serif', 
-                        'system-ui', 
-                        '-apple-system', 
-                        'system-ui', 
-                        'Segoe UI', 
-                        'Roboto', 
-                        'Helvetica Neue', 
-                        'Arial', 
-                        'Noto Sans', 
-                        'sans-serif', 
-                        'Apple Color Emoji', 
-                        'Segoe UI Emoji', 
-                        'Segoe UI Symbol', 
-                        'Noto Color Emoji'
-                    ]
                 }
             }
         }
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        .spelling-error { text-decoration: underline wavy red; }
+        @import url('https://fonts.googleapis.com/css2?family=Jura:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap');
+        
+        .neuomorphic {
+            box-shadow: 
+                12px 12px 24px 0 rgba(0, 0, 0, 0.2),
+                -12px -12px 24px 0 rgba(255, 255, 255, 0.05);
+        }
+        
+        .ai-border {
+            border: 2px solid transparent;
+            border-image: linear-gradient(to right, #15b585, #39cea0);
+            border-image-slice: 1;
+        }
+        
+        .neural-bg {
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(21, 181, 133, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 0% 0%, rgba(57, 206, 160, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(10, 145, 108, 0.1) 0%, transparent 50%);
+        }
+        
+        .glow-text {
+            text-shadow: 0 0 10px rgba(21, 181, 133, 0.7);
+        }
+        
+        .neural-pulse::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(21, 181, 133, 0.4) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            animation: neural-pulse 2s infinite;
+        }
+        
+        @keyframes neural-pulse {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+            50% { opacity: 1; }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
+        }
+
         .markdown-content h1, .markdown-content h2, .markdown-content h3 { 
             margin-top: 1em; 
             margin-bottom: 0.5em; 
             font-weight: bold; 
+            color: #15b585;
         }
         .markdown-content h1 { font-size: 1.5em; }
         .markdown-content h2 { font-size: 1.3em; }
@@ -71,31 +101,61 @@
             margin-left: 1.5em; 
             margin-bottom: 1em; 
         }
+        .markdown-content li {
+            margin-bottom: 0.5em;
+        }
         .markdown-content code {
-            background-color: #2d3748;
+            background-color: #1e293b;
             padding: 0.2em 0.4em;
             border-radius: 0.3em;
-            font-family: monospace;
+            font-family: 'JetBrains Mono', monospace;
         }
         .markdown-content pre {
-            background-color: #2d3748;
+            background-color: #1e293b;
             padding: 1em;
             border-radius: 0.3em;
             overflow-x: auto;
+            margin-bottom: 1em;
         }
         .markdown-content pre code {
             background-color: transparent;
             padding: 0;
         }
+        .markdown-content a {
+            color: #39cea0;
+            text-decoration: underline;
+        }
+        .markdown-content blockquote {
+            border-left: 4px solid #15b585;
+            padding-left: 1em;
+            margin-left: 0;
+            margin-bottom: 1em;
+            font-style: italic;
+        }
+
+        #neural-network {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+        }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100 antialiased">
-    <div class="min-h-screen flex flex-col">
-        <nav class="bg-gray-800 border-b border-gray-700">
+<body class="bg-gray-900 text-gray-100 antialiased font-sans neural-bg">
+    <div id="neural-network"></div>
+    <div class="content-wrapper min-h-screen flex flex-col relative z-10">
+        <nav class="bg-gray-900 border-b border-neuro-700">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
                     <div class="flex items-center">
-                        <span class="text-2xl font-semibold">🔎 SIP Lens :: Review Assistant 🤖</span>
+                        <span class="text-2xl font-semibold text-neuro-400 glow-text">NeuralSIP</span>
                     </div>
                 </div>
             </div>
@@ -105,43 +165,86 @@
             <div class="max-w-3xl mx-auto">
                 <form id="sipForm" class="space-y-6">
                     <div>
-                        <label for="sipContent" class="block text-sm font-medium text-gray-300">SIP Proposal</label>
-                        <div class="mt-1">
-                            <textarea id="sipContent" name="content" rows="10" class="block w-full rounded-md border-gray-600 bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" placeholder="Paste your SIP proposal here..." required></textarea>
+                        <label for="sipContent" class="block text-sm font-medium text-neuro-300">SIP Proposal</label>
+                        <div class="mt-1 relative">
+                            <textarea id="sipContent" name="content" rows="10" class="block w-full rounded-md border-gray-600 bg-gray-800 shadow-sm focus:border-neuro-500 focus:ring-neuro-500 sm:text-sm ai-border neuomorphic" placeholder="Initiate SIP analysis... Paste your SIP text here" required></textarea>
+                            <div id="spellcheck-suggestions" class="absolute top-full left-0 w-full bg-gray-800 rounded-md shadow-lg p-2 hidden z-10"></div>
                         </div>
                     </div>
                     <div>
-                        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                            Submit for AI Review
+                        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-neuro-600 hover:bg-neuro-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neuro-500 transition-all duration-300 ease-in-out transform hover:scale-105 neural-pulse relative overflow-hidden">
+                            <span class="relative z-10">Activate Neural Review</span>
                         </button>
                     </div>
                 </form>
 
                 <div id="loadingIndicator" class="hidden mt-8 text-center">
-                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                    <p class="mt-2 text-sm text-gray-400">Reviewing SIP...</p>
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-neuro-500"></div>
+                    <p class="mt-2 text-sm text-neuro-400 animate-pulse-fast">Neural Network Analyzing...</p>
                 </div>
 
-                <div id="errorMessage" class="hidden mt-8 bg-red-900 text-white px-4 py-3 rounded relative" role="alert">
-                    <strong class="font-bold">Error!</strong>
+                <div id="errorMessage" class="hidden mt-8 bg-red-900 text-white px-4 py-3 rounded-md relative" role="alert">
+                    <strong class="font-bold">Error in Neural Pathways!</strong>
                     <span class="block sm:inline" id="errorText"></span>
                 </div>
 
-                <div id="reviewResult" class="hidden mt-8 bg-gray-800 rounded-lg p-6 shadow-lg">
-                    <h2 class="text-2xl font-semibold mb-4">Review Results</h2>
+                <div id="reviewResult" class="hidden mt-8 bg-gray-800 rounded-lg p-6 shadow-lg ai-border neuomorphic">
+                    <h2 class="text-2xl font-semibold mb-4 text-neuro-400 glow-text">Neural Analysis Results</h2>
                     <div class="space-y-4" id="reviewContent"></div>
                 </div>
             </div>
         </main>
 
-        <footer class="bg-gray-800 border-t border-gray-700">
+        <footer class="bg-gray-900 border-t border-neuro-700">
             <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-                <p class="text-center text-sm text-gray-400">&copy; 2024 stacksgpt.xyz. All rights reserved.</p>
+                <p class="text-center text-sm text-gray-400">© 2024 NeuralSIP. Powered by OpenAI gpt-4o. Made by <a href="https://x.com/_jiga" class="text-neuro-400 hover:text-neuro-300">j2p2</a> using claude-3.5-sonnet.</p>
             </div>
         </footer>
     </div>
 
     <script>
+        // Three.js Neural Network Visualization
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000000, 0); // The second parameter is the alpha (0 = fully transparent)
+        document.getElementById('neural-network').appendChild(renderer.domElement);
+
+        const geometry = new THREE.BufferGeometry();
+        const vertices = [];
+        const colors = [];
+        for (let i = 0; i < 500; i++) {
+            vertices.push(THREE.MathUtils.randFloatSpread(100));
+            vertices.push(THREE.MathUtils.randFloatSpread(100));
+            vertices.push(THREE.MathUtils.randFloatSpread(100));
+            colors.push(0.5 + Math.random() * 0.5);
+            colors.push(0.5 + Math.random() * 0.5);
+            colors.push(0.5 + Math.random() * 0.5);
+        }
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+        const material = new THREE.PointsMaterial({ size: 0.5, vertexColors: true });
+        const points = new THREE.Points(geometry, material);
+        scene.add(points);
+
+        camera.position.z = 50;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            points.rotation.x += 0.001;
+            points.rotation.y += 0.002;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
         document.getElementById('sipForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const content = document.getElementById('sipContent').value;
@@ -164,6 +267,13 @@
                 if (!response.ok) throw new Error('Failed to get review');
 
                 const data = await response.json();
+                
+                // Convert feedback to string if it's an object
+                const feedbackString = typeof data.feedback === 'object' ? JSON.stringify(data.feedback, null, 2) : data.feedback;
+
+                // Parse the markdown
+                const parsedFeedback = marked.parse(feedbackString);
+
                 reviewContent.innerHTML = `
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         ${createReviewItem('Well-formed', data.isWellFormed)}
@@ -178,13 +288,14 @@
                     </div>
                     <div class="mt-6">
                         <h3 class="text-lg font-semibold mb-2">Feedback:</h3>
-                        <div class="markdown-content text-gray-300">${marked.parse(data.feedback)}</div>
+                        <div class="markdown-content text-gray-300">${parsedFeedback}</div>
                     </div>
                 `;
                 reviewResult.classList.remove('hidden');
             } catch (error) {
+                console.error('Error details:', error);
                 errorMessage.classList.remove('hidden');
-                document.getElementById('errorText').textContent = error.message;
+                document.getElementById('errorText').textContent = error.message || 'An unexpected error occurred';
             } finally {
                 loadingIndicator.classList.add('hidden');
             }
@@ -194,11 +305,11 @@
             const iconClass = value ? 'text-green-500' : 'text-red-500';
             const icon = value ? '✓' : '✗';
             return `
-                <div class="flex items-center p-4 bg-gray-700 rounded-lg">
+                <div class="flex items-center p-4 bg-gray-700 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 neuomorphic">
                     <span class="text-2xl ${iconClass} mr-3">${icon}</span>
                     <div>
-                        <p class="font-semibold">${label}</p>
-                        <p class="text-sm text-gray-400">${value ? 'Yes' : 'No'}</p>
+                        <p class="font-semibold text-neuro-300">${label}</p>
+                        <p class="text-sm text-gray-400">${value ? 'Affirmative' : 'Negative'}</p>
                     </div>
                 </div>
             `;
