@@ -269,7 +269,11 @@
                 const data = await response.json();
                 
                 // Convert feedback to string if it's an object
-                const feedbackString = typeof data.feedback === 'object' ? JSON.stringify(data.feedback, null, 2) : data.feedback;
+                const feedbackString = Array.isArray(data.feedback)
+                    ? data.feedback.map(item => `• ${item}`).join('\n\n')
+                    : typeof data.feedback === 'object'
+                        ? JSON.stringify(data.feedback, null, 2)
+                        : data.feedback;
 
                 // Parse the markdown
                 const parsedFeedback = marked.parse(feedbackString);

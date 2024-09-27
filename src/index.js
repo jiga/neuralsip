@@ -42,8 +42,9 @@ export default {
         4. Recommending additional Considerations (strictly from one of these categories: Technical, Economic, Governance, Ethics or Diversity) from the Specification if appropriate.
         5. Ensuring that the text is clear, concise, and grammatically-correct English.
         6. Ensuring that there are appropriate avenues for discussion of the SIP listed in the preamble.
+        7. Extracting the title from the SIP proposal and accurately counting the number of words. Exclude punctuation and word 'Title' itself from the word count. **Ensure that the title is no more than 20 words long. Titles containing 20 words or fewer meet the requirement. Only provide feedback if the title exceeds 20 words or if a there is an alternative title to recommend.**.
 
-        You should evaluate each SIP based on these criteria and provide detailed feedback to help improve the proposal. Your goal is to ensure that only high-quality, well-formed SIPs move forward in the process.
+        You should evaluate each SIP based on these criteria and provide detailed feedback to help improve the proposal. Your goal is to ensure that only high-quality, well-formed SIPs move forward in the process. Do not make up any criteria that are not in the SIP Specification. Do not mention or repeat things that already meets the Specification.
 
         Remember:
         - Be objective and fair in your assessment.
@@ -155,18 +156,26 @@ The act of ratifying a SIP is the act of transitioning it to the Ratified status
 
       const userPrompt = `
         Review the following SIP proposal:
-
+        
+        <SIP Proposal>
         ${content}
+        </SIP Proposal>
 
         Provide a review with the following structure:
         1. Is it well-formed? (true/false)
         2. Does it appear to be original work? (true/false)
         3. Is it appropriate for its Type and Consideration? (true/false)
         4. Suggest additional Considerations if appropriate (list)
-        5. Provide detailed feedback (string)
+        5. Provide detailed feedback with **all** issues and suggestions (formatted in Markdown as a list of bullet points with reasoning)
+        6. **Include the title word length (integer)**
 
         Format your response as a JSON object with the following keys:
-        isWellFormed, isOriginal, isAppropriate, suggestedConsiderations, feedback
+        - \`isWellFormed\`
+        - \`isOriginal\`
+        - \`isAppropriate\`
+        - \`suggestedConsiderations\`
+        - \`feedback\`
+        - \`titleWordLength\`
       `
 
       const openai = new OpenAI({
@@ -184,7 +193,7 @@ The act of ratifying a SIP is the act of transitioning it to the Ratified status
 
 
         const chatCompletion = await openai.chat.completions.create({
-          model: "gpt-4o",
+          model: "gpt-4o-mini",
           messages: [
               { role: 'system', content: systemPrompt },
               { role: 'user', content: userPrompt }
