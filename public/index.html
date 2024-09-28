@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/typo-js/1.2.1/typo.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script>
         // Configure marked.js
         marked.setOptions({
@@ -146,6 +147,19 @@
             position: relative;
             z-index: 1;
         }
+
+        .icon-button {
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            transition: all 0.3s;
+        }
+        .icon-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .icon-button svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 antialiased font-sans neural-bg">
@@ -189,7 +203,25 @@
                 </div>
 
                 <div id="reviewResult" class="hidden mt-8 bg-gray-800 rounded-lg p-6 shadow-lg ai-border neuomorphic">
-                    <h2 class="text-2xl font-semibold mb-4 text-neuro-400 glow-text">Neural Analysis Results</h2>
+                    <div class="text-center mb-6">
+                        <h1 class="text-3xl font-bold text-neuro-400 glow-text">NeuralSIP Analysis</h1>
+                        <h2 id="sipTitle" class="text-xl text-neuro-300 mt-2"></h2>
+                    </div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-semibold text-neuro-400 glow-text">Neural Analysis Results</h2>
+                        <div class="flex space-x-2">
+                            <button id="copyButton" class="icon-button" title="Copy to Clipboard">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                </svg>
+                            </button>
+                            <button id="shareButton" class="icon-button" title="Share as Image">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                     <div class="space-y-4" id="reviewContent"></div>
                 </div>
             </div>
@@ -245,6 +277,11 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
+        function extractSipTitle(content) {
+            const titleMatch = content.match(/^Title:\s*(.+)$/m);
+            return titleMatch ? titleMatch[1].trim() : 'Untitled SIP';
+        }
+
         document.getElementById('sipForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const content = document.getElementById('sipContent').value;
@@ -268,6 +305,10 @@
 
                 const data = await response.json();
                 
+                // Extract and set the SIP title
+                const sipTitle = extractSipTitle(content);
+                document.getElementById('sipTitle').textContent = sipTitle;
+
                 // Convert feedback to string if it's an object
                 const feedbackString = Array.isArray(data.feedback)
                     ? data.feedback.map(item => `• ${item}`).join('\n\n')
@@ -296,6 +337,7 @@
                     </div>
                 `;
                 reviewResult.classList.remove('hidden');
+                document.getElementById('shareButton').classList.remove('hidden');
             } catch (error) {
                 console.error('Error details:', error);
                 errorMessage.classList.remove('hidden');
@@ -318,6 +360,89 @@
                 </div>
             `;
         }
+
+        async function captureAsImage(forClipboard = false) {
+            const reviewResult = document.getElementById('reviewResult');
+            
+            // Create a temporary container for the image
+            const tempContainer = document.createElement('div');
+            tempContainer.className = reviewResult.className;
+            tempContainer.style.width = `${reviewResult.offsetWidth}px`;
+            tempContainer.innerHTML = reviewResult.innerHTML;
+
+            // Hide the buttons in the cloned content
+            tempContainer.querySelector('#shareButton').style.display = 'none';
+            tempContainer.querySelector('#copyButton').style.display = 'none';
+
+            // Add footer to the temporary container
+            const footer = document.createElement('div');
+            footer.className = 'mt-6 pt-4 border-t border-gray-700 text-center text-sm text-gray-400';
+            footer.innerHTML = `
+                <p>https://neuralsip.j2p2.workers.dev</p>
+                <p>© 2024 NeuralSIP. Powered by OpenAI gpt-4o. Made by j2p2 using claude-3.5-sonnet.</p>
+            `;
+            tempContainer.appendChild(footer);
+
+            // Append the temporary container to the body (off-screen)
+            tempContainer.style.position = 'absolute';
+            tempContainer.style.left = '-9999px';
+            document.body.appendChild(tempContainer);
+
+            // Capture the image
+            const canvas = await html2canvas(tempContainer, {
+                scale: 2,
+                logging: false,
+                useCORS: true,
+                backgroundColor: '#1f2937', // Match the bg-gray-800 color
+                width: reviewResult.offsetWidth,
+                windowWidth: reviewResult.offsetWidth
+            });
+
+            // Remove the temporary container
+            document.body.removeChild(tempContainer);
+
+            if (forClipboard) {
+                return canvas;
+            } else {
+                // Convert to blob and trigger download
+                canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `NeuralSIP_Analysis_${document.getElementById('sipTitle').textContent.replace(/\s+/g, '_')}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 'image/png');
+            }
+        }
+
+        async function copyImageToClipboard() {
+            const canvas = await captureAsImage(true);
+            canvas.toBlob(async (blob) => {
+                try {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({
+                            'image/png': blob
+                        })
+                    ]);
+                    // Show a brief "Copied!" message
+                    const copyButton = document.getElementById('copyButton');
+                    const originalTitle = copyButton.title;
+                    copyButton.title = 'Copied!';
+                    setTimeout(() => {
+                        copyButton.title = originalTitle;
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy image: ', err);
+                    alert('Failed to copy image to clipboard. Your browser may not support this feature.');
+                }
+            }, 'image/png');
+        }
+
+        document.getElementById('shareButton').addEventListener('click', () => captureAsImage(false));
+        document.getElementById('copyButton').addEventListener('click', copyImageToClipboard);
     </script>
 </body>
 </html>

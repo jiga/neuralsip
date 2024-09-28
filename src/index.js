@@ -166,7 +166,7 @@ The act of ratifying a SIP is the act of transitioning it to the Ratified status
         2. Does it appear to be original work? (true/false)
         3. Is it appropriate for its Type and Consideration? (true/false)
         4. Suggest additional Considerations if appropriate (list)
-        5. Provide detailed feedback with **all** issues and suggestions (formatted in Markdown as a list of bullet points with reasoning)
+        5. Provide detailed feedback with **all** issues and suggestions (formatted in Markdown as a list of bullet points with reasoning). Note that title with less than 20 words is fine.
         6. **Include the title word length (integer)**
 
         Format your response as a JSON object with the following keys:
